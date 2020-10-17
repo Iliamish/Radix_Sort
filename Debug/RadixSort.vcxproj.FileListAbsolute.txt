@@ -1,2 +1,0 @@
-F:\C++Projects\RadixSort\Debug\RadixSort.exe
-F:\C++Projects\RadixSort\Debug\RadixSort.pdb
