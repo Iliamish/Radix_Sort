@@ -4,6 +4,7 @@
 #include <random>
 #include <ctime>
 #include <algorithm>
+#include <mpi.h>
 
 namespace generators{
 	template <typename Type>
@@ -97,6 +98,41 @@ namespace sort{
 			}
 		}
 		return out;
+	}
+
+	template <typename Container>
+	Container radix_sort_mpi_stl_containers(const Container& container, int width, int range) {
+		MPI_Init(NULL, NULL);
+
+		int size, rank;
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+		std::cout << rank << std::endl;
+
+		/*Container out = container;
+		std::vector<std::list<int>> pocketArray(range);
+		int digit;
+		int power = range;
+		for (int k = 0; k < width; k++) {
+			for (auto it = out.begin(); it < out.end(); ++it) {
+				digit = *it % power / (power / range);
+				pocketArray[digit].push_back(*it);
+			}
+			power *= range;
+
+			out.clear();
+
+			for (auto it = pocketArray.begin(); it < pocketArray.end(); ++it) {
+				for (auto item = it->begin(); item != it->end(); ++item) {
+					out.push_back(*item);
+				}
+				it->clear();
+			}
+		}
+		return out;*/
+		MPI_Finalize();
+		return Container();
 	}
 
 	template <typename Type>
