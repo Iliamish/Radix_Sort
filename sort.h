@@ -30,6 +30,47 @@ namespace generators{
 	}
 }
 
+namespace algorithm {
+	std::vector<int> merge(std::vector<int> vector1, std::vector<int> vector2) {
+
+		/*for (size_t i = 0; i < vector1.size(); i++) {
+			std::cout << vector1[i] << std::endl;
+		}
+
+		for (size_t i = 0; i < vector2.size(); i++) {
+			std::cout << vector2[i] << std::endl;
+		}*/
+
+		int A = 0, B = 0;
+		std::vector<int> output(vector1.size() + vector2.size() - 1);
+		for (size_t i = 0; i < vector1.size() + vector2.size() - 1; i++) {
+			if (vector1[A] < vector2[B]) {
+				output[i] = vector1[A];
+				++A;
+			} else {
+				output[i] = vector2[B];
+				++B;
+			}
+
+			if (A == vector1.size()) {
+				for (size_t j = 0; j < vector2.size() - B - 1; j++) {
+					output[i + j + 1] = vector2[B + j];
+				}
+				break;
+			}
+
+			if (B == vector2.size()) {
+				for (size_t j = 0; j < vector1.size() - A - 1; j++) {
+					output[i + j + 1] = vector1[A + j];
+				}
+				break;
+			}
+
+		}
+		return output;
+	}
+}
+
 namespace sort{
 	template<typename Type>
 	struct Node{
@@ -76,8 +117,8 @@ namespace sort{
 	};
 
 	template <typename Container>
-	Container radix_sort_stl_containers(const Container& container, int width, int range) {
-		Container out = container;
+	void radix_sort_stl_containers(Container& container, int width, int range) {
+		Container& out = container;
 		std::vector<std::list<int>> pocketArray(range);
 		int digit;
 		int power = range;
@@ -97,46 +138,99 @@ namespace sort{
 				it->clear();
 			}
 		}
-		return out;
 	}
 
 	template <typename Container>
-	Container radix_sort_mpi_stl_containers(const Container& container, int width, int range) {
+	void radix_sort_mpi_stl_containers(const Container& container, int width, int range) {
 		MPI_Init(NULL, NULL);
 
 		int size, rank;
 		MPI_Comm_size(MPI_COMM_WORLD, &size);
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-		std::cout << rank << std::endl;
+		int n = container.size();
+		int k;
+		MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-		/*Container out = container;
-		std::vector<std::list<int>> pocketArray(range);
-		int digit;
-		int power = range;
-		for (int k = 0; k < width; k++) {
-			for (auto it = out.begin(); it < out.end(); ++it) {
-				digit = *it % power / (power / range);
-				pocketArray[digit].push_back(*it);
-			}
-			power *= range;
+		if (rank < n % size)
+			k = n / size + 1;
+		else
+			k = n / size;
 
-			out.clear();
 
-			for (auto it = pocketArray.begin(); it < pocketArray.end(); ++it) {
-				for (auto item = it->begin(); item != it->end(); ++item) {
-					out.push_back(*item);
-				}
-				it->clear();
+		int* raz = new int[size];
+		int* dist = new int[size];
+
+		if (rank == 0) {			
+			int dif = 0;
+			for (size_t i = 0; i < size; i++) {
+				raz[i] = (rank < n% size) ? (n / size + 1) : (n / size);
+				dist[i] = dif;
+				dif += (rank < n% size) ? (n / size + 1) : (n / size);
 			}
 		}
-		return out;*/
+
+		Container x(k);
+
+
+		MPI_Scatterv(&container[0], raz, dist, MPI_INT, &x[0] , k, MPI_INT,	0, MPI_COMM_WORLD);
+
+
+		radix_sort_stl_containers(x, 5, 10);
+
+		int s = size, m = 1;
+
+		while (s > 1)
+		{
+			s = s / 2 + s % 2;
+
+			if ((rank - m) % (2 * m) == 0)
+
+			{
+
+				MPI_Send(&k, 1, MPI_INT,
+
+					rank - m, 0, MPI_COMM_WORLD);
+
+				MPI_Send(&x[0], k, MPI_INT,
+
+					rank - m, 0, MPI_COMM_WORLD);
+
+			}
+
+			if ((rank % (2 * m) == 0) && (size - rank > m))
+
+			{
+
+				MPI_Status status;
+
+				int k1;
+
+				MPI_Recv(&k1, 1, MPI_INT,
+
+					rank + m, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+				Container y(k1);
+
+				MPI_Recv(&y[0], k1, MPI_INT,
+
+					rank + m, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+				x = algorithm::merge(y, x);
+
+				k = k + k1;
+
+			}
+
+			m = 2 * m;
+
+		}
+
 		MPI_Finalize();
-		return Container();
 	}
 
 	template <typename Type>
-	Type* radix_sort_arrays(Type* array, size_t size , int width, int range) {
+	void radix_sort_arrays(Type* array, size_t size , int width, int range) {
 		Type* out = array;
 		
 		List<int>* pocketArray = new List<int>[range];
@@ -160,6 +254,7 @@ namespace sort{
 				pocketArray[i].clear();
 			}
 		}
-		return out;
 	}
 }
+
+

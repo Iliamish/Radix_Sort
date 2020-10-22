@@ -58,22 +58,44 @@ TEST_CASE("Sequential dynamic array( N = 4000000)", "[classic]") {
 
 	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
-	int* out = sort::radix_sort_arrays<int>(arr, N, 5, 10);
+	sort::radix_sort_arrays<int>(arr, N, 5, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	outfile << "Radix Sequential dynamic array (n = " << N << ", digits = " << 5 << "): " << float(clock() - begin_time) / CLOCKS_PER_SEC << "\n" << std::endl;
 	
-	delete[] out;
+	delete[] arr;
 
 	begin_time = clock();
 	arr = generators::generateRandomNumbersArray<int>(N, 0, 9999999999);
-	out = sort::radix_sort_arrays<int>(arr, N, 10, 10);
+	sort::radix_sort_arrays<int>(arr, N, 10, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	outfile << "Radix Sequential dynamic array (n = " << N << ", digits = " << 10 << "): " << float(clock() - begin_time) / CLOCKS_PER_SEC << "\n" << std::endl;
 
-	delete[] out;
+	delete[] arr;
 
 	outfile.close();
 
 	REQUIRE("0" == "0");
 }
+
+//Write another testing case for OpenMPI
+//TEST_CASE("Parallel STL container", "[classic]") {
+//	const size_t N = 4000000;
+//	std::ofstream outfile("Readme.md");
+//
+//	clock_t begin_time = clock();
+//	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
+//	sort::radix_sort_mpi_stl_containers(vec, 5, 10);
+//	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+//	outfile << "Radix Parallel STL container (n = " << N << ", digits = " << 5 << "): " << float(clock() - begin_time) / CLOCKS_PER_SEC << "\n" << std::endl;
+//
+//	/*begin_time = clock();
+//	vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 9999999999);
+//	sort::radix_sort_stl_containers(vec, 10, 10);
+//	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+//	outfile << "Radix Sequential STL container (n = " << N << ", digits = " << 10 << "): " << float(clock() - begin_time) / CLOCKS_PER_SEC << "\n" << std::endl;*/
+//
+//	//outfile.close();
+//
+//	REQUIRE("0" == "0");
+//}
 
