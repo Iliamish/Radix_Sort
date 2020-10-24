@@ -1,14 +1,18 @@
 RESULTS:
 
-Radix Sequential STL container (n = 4000000, digits = 5): 79.345
+*Machine:*
 
-Radix Sequential STL container (n = 4000000, digits = 10): 156.752
+Processor: AMD Ryzen 7 2700 Eight-Core Processor 3.20 Gz
 
-std::sort Sequential STL container (n = 4000000, digits = 5): 14.415
+Memory: 32 Gb
 
-std::sort Sequential STL container (n = 4000000, digits = 10): 18.659
+System: Windows 10
 
-Radix Sequential dynamic array (n = 4000000, digits = 5): 12.473
-
-Radix Sequential dynamic array (n = 4000000, digits = 10): 23.72
-
+| Algorithm | Version | Container type | Number of elements | Digits in number | Sort time in seconds |
+| --- | --- | --- | --- | --- | --- |
+| Radix | Sequential | STL vector | 4000000 | 5 | 80.521 | 
+| Radix | Sequential | STL vector | 4000000 | 10 | 159.202 | 
+| std::sort | Sequential | STL vector | 4000000 | 5 | 14.738 | 
+| std::sort | Sequential | STL vector | 4000000 | 10 | 19.393 | 
+| Radix | Sequential | Dynamic Array | 4000000 | 5 | 13.049 | 
+| Radix | Sequential | Dynamic Array | 4000000 | 10 | 25.36 | 

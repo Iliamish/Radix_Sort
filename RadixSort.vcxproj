@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="catch.hpp" />
+    <ClInclude Include="Markdown.h" />
     <ClInclude Include="sort.h" />
   </ItemGroup>
   <ItemGroup>
