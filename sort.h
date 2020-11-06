@@ -4,7 +4,10 @@
 #include <random>
 #include <ctime>
 #include <algorithm>
+#include <iterator>
 #include <mpi.h>
+#include <tbb/tbb.h>
+
 
 namespace generators{
 	template <typename Type>
@@ -42,8 +45,8 @@ namespace algorithm {
 		}*/
 
 		int A = 0, B = 0;
-		std::vector<int> output(vector1.size() + vector2.size() - 1);
-		for (size_t i = 0; i < vector1.size() + vector2.size() - 1; i++) {
+		std::vector<int> output(vector1.size() + vector2.size());
+		for (size_t i = 0; i < vector1.size() + vector2.size(); i++) {
 			if (vector1[A] < vector2[B]) {
 				output[i] = vector1[A];
 				++A;
@@ -53,14 +56,53 @@ namespace algorithm {
 			}
 
 			if (A == vector1.size()) {
-				for (size_t j = 0; j < vector2.size() - B - 1; j++) {
+				for (size_t j = 0; j < vector2.size() - B; j++) {
 					output[i + j + 1] = vector2[B + j];
 				}
 				break;
 			}
 
 			if (B == vector2.size()) {
-				for (size_t j = 0; j < vector1.size() - A - 1; j++) {
+				for (size_t j = 0; j < vector1.size() - A; j++) {
+					output[i + j + 1] = vector1[A + j];
+				}
+				break;
+			}
+
+		}
+		return output;
+	}
+
+	int* merge(int* vector1, int* vector2, size_t s1, size_t s2) {
+
+		for (size_t i = 0; i < s1; i++) {
+			std::cout << vector1[i] << std::endl;
+		}
+
+		for (size_t i = 0; i < s2; i++) {
+			std::cout << vector2[i] << std::endl;
+		}
+
+		int A = 0, B = 0;
+		int* output = new int[s1 + s2];
+		for (size_t i = 0; i < s1 + s2; i++) {
+			if (vector1[A] < vector2[B]) {
+				output[i] = vector1[A];
+				++A;
+			} else {
+				output[i] = vector2[B];
+				++B;
+			}
+
+			if (A == s1) {
+				for (size_t j = 0; j < s2 - B - 1; j++) {
+					output[i + j + 1] = vector2[B + j];
+				}
+				break;
+			}
+
+			if (B == s2) {
+				for (size_t j = 0; j < s1 - A - 1; j++) {
 					output[i + j + 1] = vector1[A + j];
 				}
 				break;
@@ -77,6 +119,12 @@ namespace sort{
 		Node* next = nullptr;
 		Node* previous = nullptr;
 		Type data;
+	};
+
+	template<typename Type>
+	struct Pair {
+		Type* array = nullptr;
+		size_t size = 0;
 	};
 	
 	template<typename Type>
@@ -138,6 +186,114 @@ namespace sort{
 				it->clear();
 			}
 		}
+	}
+
+	template <typename Container>
+	void radix_sort_stl_containers(typename Container::iterator begin, typename Container::iterator end, int width, int range) {
+		std::vector<std::list<int>> pocketArray(range);
+		int digit;
+		int power = range;
+		for (int k = 0; k < width; k++) {
+			for (auto it = begin; it < end; ++it) {
+				digit = *it % power / (power / range);
+				pocketArray[digit].push_back(*it);
+			}
+			power *= range;
+
+			int i = 0;
+			for (auto it = pocketArray.begin(); it < pocketArray.end(); ++it) {
+				for (auto item = it->begin(); item != it->end(); ++item) {
+					*(begin + i) = *item;
+					++i;
+				}
+				it->clear();
+			}
+		}
+	}
+
+	//template <typename Container>
+	void radix_sort_tbb_stl_containers(std::vector<int>& container, int width, int range) {
+		container = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, container.size()), std::vector<int>(),
+			[&](const tbb::blocked_range<int>& r, std::vector<int> v) -> std::vector<int> {
+			for (int i = r.begin(); i != r.end(); ++i) {
+				v.push_back(container[i]);
+			}
+			radix_sort_stl_containers(v, width, range);
+			return v;
+		},
+			[](std::vector<int> v1, std::vector<int> v2) -> std::vector<int> {
+			return algorithm::merge(v1, v2);
+		}
+		);
+	}
+
+	template <typename Type>
+	void radix_sort_arrays(Type* array, size_t size, int width, int range) {
+		Type* out = array;
+
+		List<int>* pocketArray = new List<int>[range];
+		int digit;
+		int power = range;
+		for (int k = 0; k < width; k++) {
+			for (size_t i = 0; i < size; ++i) {
+				digit = out[i] % power / (power / range);
+				pocketArray[digit].push_back(out[i]);
+			}
+			power *= range;
+
+			int pos = 0;
+			for (size_t i = 0; i < range; ++i) {
+				auto item = pocketArray[i].first;
+				for (size_t j = 0; j < pocketArray[i].count; ++j) {
+					out[pos] = item->data;
+					++pos;
+					item = item->next;
+				}
+				pocketArray[i].clear();
+			}
+		}
+	}
+
+	template <typename Type>
+	void radix_sort_tbb_arrays(Type* array, size_t size, int width, int range) {
+		for (size_t i = 0; i < size; i++) {
+			std::cout << array[i] << std::endl;
+		}
+
+		Pair<Type> pair = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, size), Pair<Type>(),
+			[&](const tbb::blocked_range<int>& r, Pair<Type> part_pair) -> Pair<Type> {
+			part_pair.array = new Type[r.size()];
+			part_pair.size = r.size();
+			int k = 0;
+			
+			//std::cout <<"-------pack-----------" << r.begin() << std::endl;
+			for (int i = r.begin(); i != r.end(); ++i)
+				part_pair.array[k++] = array[i];
+			radix_sort_arrays<Type>(part_pair.array, part_pair.size, width, range);
+
+			/*for (int i = r.begin(); i != r.end(); ++i) {
+				std::cout << part_pair.first[i] << std::endl;
+			}
+			std::cout <<"-------pack-----------" << r.size() << std::endl;*/
+
+			return part_pair;
+		},
+			[](Pair<Type> pair1, Pair<Type> pair2) -> Pair<Type> {
+				std::cout << "-------pack-----------" << pair1.size << std::endl;
+				Pair<Type> ret_pair;
+				ret_pair.array = algorithm::merge(pair1.array, pair2.array, pair1.size, pair2.size);
+				ret_pair.size = pair1.size + pair2.size;
+				delete[] pair1.array;
+				delete[] pair2.array;
+				return ret_pair;
+			}
+		);
+		
+		array = pair.array;
+		for (size_t i = 0; i < size; i++) {
+			std::cout << array[i] << std::endl;
+		}
+
 	}
 
 	template <typename Container>
@@ -227,33 +383,6 @@ namespace sort{
 		}
 
 		MPI_Finalize();
-	}
-
-	template <typename Type>
-	void radix_sort_arrays(Type* array, size_t size , int width, int range) {
-		Type* out = array;
-		
-		List<int>* pocketArray = new List<int>[range];
-		int digit;
-		int power = range;
-		for (int k = 0; k < width; k++) {
-			for (size_t i = 0; i < size; ++i) {
-				digit = out[i] % power / (power / range);
-				pocketArray[digit].push_back(out[i]);
-			}
-			power *= range;
-
-			int pos = 0;
-			for (size_t i = 0; i < range; ++i) {
-				auto item = pocketArray[i].first;
-				for (size_t j = 0; j < pocketArray[i].count; ++j) {
-					out[pos] = item->data;
-					++pos;
-					item = item->next;
-				}
-				pocketArray[i].clear();
-			}
-		}
 	}
 }
 

@@ -4,7 +4,7 @@
 
 void writeColumnsNames() {
 	std::ofstream outfile("Readme.md");
-	outfile << "# Radix sort:\n\n" << std::endl;
+	outfile << "# Radix sort\n\n" << std::endl;
 	outfile << "## Machine:\n" << std::endl;
 	outfile << "	Processor: AMD Ryzen 7 2700 Eight-Core Processor 3.20 Gz\n" << std::endl;
 	outfile << "	Memory: 32 Gb\n" << std::endl;
