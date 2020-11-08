@@ -328,7 +328,7 @@ TEST_CASE("Parallel std::thread array 5", "[classic]") {
 
 	sort::radix_sort_tbb_arrays(arr, N, 5, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
-	writeResult("Radix", "Parallel TBB", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
+	writeResult("Radix", "std::thread", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
 	std::sort(vec.begin(), vec.end());
 	bool error = false;
@@ -356,7 +356,7 @@ TEST_CASE("Parallel std::thread array 9", "[classic]") {
 
 	sort::radix_sort_tbb_arrays(arr, N, 9, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
-	writeResult("Radix", "Parallel TBB", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
+	writeResult("Radix", "std::thread", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
 	std::sort(vec.begin(), vec.end());
 	bool error = false;
