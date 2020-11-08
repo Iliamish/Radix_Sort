@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iterator>
 #include <mpi.h>
+#include <thread>
 #include <tbb/tbb.h>
 
 
@@ -74,15 +75,6 @@ namespace algorithm {
 	}
 
 	int* merge(int* vector1, int* vector2, size_t s1, size_t s2) {
-
-		for (size_t i = 0; i < s1; i++) {
-			std::cout << vector1[i] << std::endl;
-		}
-
-		for (size_t i = 0; i < s2; i++) {
-			std::cout << vector2[i] << std::endl;
-		}
-
 		int A = 0, B = 0;
 		int* output = new int[s1 + s2];
 		for (size_t i = 0; i < s1 + s2; i++) {
@@ -211,18 +203,21 @@ namespace sort{
 		}
 	}
 
-	//template <typename Container>
-	void radix_sort_tbb_stl_containers(std::vector<int>& container, int width, int range) {
-		container = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, container.size()), std::vector<int>(),
-			[&](const tbb::blocked_range<int>& r, std::vector<int> v) -> std::vector<int> {
+	template <typename Container>
+	void radix_sort_tbb_stl_containers(Container& container, int width, int range) {
+		container = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, container.size()), Container(),
+			[&](const tbb::blocked_range<int>& r, Container v) -> Container {
 			for (int i = r.begin(); i != r.end(); ++i) {
 				v.push_back(container[i]);
 			}
 			radix_sort_stl_containers(v, width, range);
 			return v;
 		},
-			[](std::vector<int> v1, std::vector<int> v2) -> std::vector<int> {
-			return algorithm::merge(v1, v2);
+			[](Container v1, Container v2) -> Container {
+			//return algorithm::merge(v1, v2);
+			Container res(v1.size() + v2.size());
+			std::merge(v1.begin(), v1.end(), v2.begin(), v2.end(), res.begin());
+			return res;
 		}
 		);
 	}
@@ -252,48 +247,169 @@ namespace sort{
 				pocketArray[i].clear();
 			}
 		}
+
+		delete[] pocketArray;
 	}
 
 	template <typename Type>
 	void radix_sort_tbb_arrays(Type* array, size_t size, int width, int range) {
-		for (size_t i = 0; i < size; i++) {
-			std::cout << array[i] << std::endl;
-		}
-
 		Pair<Type> pair = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, size), Pair<Type>(),
 			[&](const tbb::blocked_range<int>& r, Pair<Type> part_pair) -> Pair<Type> {
 			part_pair.array = new Type[r.size()];
 			part_pair.size = r.size();
 			int k = 0;
 			
-			//std::cout <<"-------pack-----------" << r.begin() << std::endl;
 			for (int i = r.begin(); i != r.end(); ++i)
 				part_pair.array[k++] = array[i];
 			radix_sort_arrays<Type>(part_pair.array, part_pair.size, width, range);
 
-			/*for (int i = r.begin(); i != r.end(); ++i) {
-				std::cout << part_pair.first[i] << std::endl;
-			}
-			std::cout <<"-------pack-----------" << r.size() << std::endl;*/
-
 			return part_pair;
 		},
 			[](Pair<Type> pair1, Pair<Type> pair2) -> Pair<Type> {
-				std::cout << "-------pack-----------" << pair1.size << std::endl;
 				Pair<Type> ret_pair;
-				ret_pair.array = algorithm::merge(pair1.array, pair2.array, pair1.size, pair2.size);
 				ret_pair.size = pair1.size + pair2.size;
+				ret_pair.array = new Type[ret_pair.size];
+				std::merge(pair1.array, pair1.array + pair1.size, pair2.array, pair2.array + pair2.size, ret_pair.array);	
 				delete[] pair1.array;
 				delete[] pair2.array;
+
 				return ret_pair;
 			}
 		);
-		
-		array = pair.array;
-		for (size_t i = 0; i < size; i++) {
-			std::cout << array[i] << std::endl;
+
+		for (int i = 0; i < pair.size; i++) {
+			array[i] = pair.array[i];
+		}
+	}
+
+	template <typename Container>
+	void radix_sort_thread_stl_containers(Container& container, int width, int range) {
+		using memfunc_type = void (*)(Container&, int, int);
+		memfunc_type radix_func = &radix_sort_stl_containers<Container>;
+
+		using memfunc_type_2 = typename Container::iterator(*)(typename Container::iterator, typename Container::iterator, typename Container::iterator, typename Container::iterator, typename Container::iterator);
+		memfunc_type_2 merge_func = &std::merge;
+
+		int delta = container.size() / 8;
+		int overhead = container.size() % 8;
+
+		std::vector<std::thread> thread_pool;
+
+		std::vector<Container> packs(8);
+
+		for (size_t i = 0; i < 8; i++) {
+			if (i < overhead) {
+				packs[i] = std::move(Container(container.begin() + i * (delta + 1), container.begin() + (i + 1) * (delta + 1)));
+				//std::thread thread(radix_func, container.begin() + i * (delta + 1), container.begin() + (i + 1) * (delta + 1), width, range);
+				std::thread thread(radix_func, std::ref(packs[i]), width, range);
+				thread_pool.push_back(std::move(thread));
+			} else {
+				packs[i] = std::move(Container(container.begin() + i * (delta)+overhead, container.begin() + (i + 1) * (delta)+overhead));
+				std::thread thread(radix_func, std::ref(packs[i]), width, range);
+				//std::thread thread(radix_func, container.begin() + i * (delta) + overhead, container.begin() + (i + 1) * (delta) + overhead, width, range);
+				thread_pool.push_back(std::move(thread));
+			}
+		}
+		for (size_t i = 0; i < 8; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
 		}
 
+		std::vector<Container> packs2(4);
+		std::vector<Container> packs3(2);
+
+		for (int i = 0; i < 4; i++) {
+			packs2[i] = std::move(Container(packs[2 * i].size() + packs[2 * i + 1].size()));
+			std::thread thread(merge_func, packs[2 * i].begin(), packs[2 * i].end(), packs[2 * i + 1].begin(), packs[2 * i + 1].end(), packs2[i].begin());
+			thread_pool[i] = (std::move(thread));
+		}
+
+		for (size_t i = 0; i < 4; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		for (int i = 0; i < 2; i++) {
+			packs3[i] = std::move(Container(packs2[2 * i].size() + packs2[2 * i + 1].size()));
+			std::thread thread(merge_func, packs2[2 * i].begin(), packs2[2 * i].end(), packs2[2 * i + 1].begin(), packs2[2 * i + 1].end(), packs3[i].begin());
+			thread_pool[i] = (std::move(thread));
+		}
+
+		for (size_t i = 0; i < 2; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		std::merge(packs3[0].begin(), packs3[0].end(), packs3[1].begin(), packs3[1].end(), container.begin());
+	}
+
+	template <typename Type>
+	void radix_sort_thread_arrays(Type* array, size_t size, int width, int range) {
+		using memfunc_type_2 = Type* (*)(Type*, Type*, Type*, Type*, Type*);
+		memfunc_type_2 merge_func = &std::merge;
+
+		int delta = size / 8;
+		int overhead = size % 8;
+
+		std::vector<std::thread> thread_pool;
+
+		Pair<Type>* packs = new Pair<Type>[8];
+
+		for (size_t i = 0; i < 8; i++) {
+			if (i < overhead) {
+				packs[i].array = array + i * (delta + 1);
+				packs[i].size = (delta + 1);
+
+				std::thread thread(radix_sort_arrays, packs[i].array, packs[i].size, width, range);
+				thread_pool.push_back(std::move(thread));
+			} else {
+				packs[i].array = array + i * (delta) + overhead;
+				packs[i].size = (delta);
+
+				std::thread thread(radix_sort_arrays, packs[i].array, packs[i].size, width, range);
+				thread_pool.push_back(std::move(thread));
+			}
+		}
+		for (size_t i = 0; i < 8; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		Pair<Type>* packs2 = new Pair<Type>[4];
+		Pair<Type>* packs3 = new Pair<Type>[4];
+
+		for (int i = 0; i < 4; i++) {
+			packs2[i].size = packs[2 * i].size() + packs[2 * i + 1].size();
+			packs2[i].array = new Type[packs2[i].size];
+			std::thread thread(merge_func, packs[2 * i].array, packs[2 * i].array + packs[2 * i].size, packs[2 * i + 1].array, packs[2 * i + 1].array + packs[2 * i + 1].size, packs2[i].array);
+			thread_pool[i] = (std::move(thread));
+		}
+
+		for (size_t i = 0; i < 4; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		for (int i = 0; i < 2; i++) {
+			packs3[i].size = packs2[2 * i].size() + packs2[2 * i + 1].size();
+			packs3[i].array = new Type[packs3[i].size];
+
+			std::thread thread(merge_func, packs2[2 * i].array, packs2[2 * i].array + packs2[2 * i].size, packs2[2 * i + 1].array, packs2[2 * i + 1].array + packs2[2 * i + 1].size, packs3[i].array);
+			thread_pool[i] = (std::move(thread));
+		}
+
+		for (size_t i = 0; i < 2; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		Pair<Type> pair;
+
+		std::merge(packs3[0].array, packs3[0].array + packs3[0].size, packs3[1].array, packs3[1].array + packs3[1].size, pair.array);
+
+		for (int i = 0; i < size; i++) {
+			array[i] = pair.array[i];
+		}
 	}
 
 	template <typename Container>

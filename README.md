@@ -14,13 +14,19 @@
 
 | Algorithm | Version | Container type | Number of elements | Digits in number | Sort time in seconds |
 | --- | --- | --- | --- | --- | --- |
-| Radix | Sequential | STL vector | 4000000 | 5 | 4.433 | 
-| Radix | Sequential | STL vector | 4000000 | 9 | 7.825 | 
-| std::sort | Sequential | STL vector | 4000000 | 5 | 0.285 | 
-| std::sort | Sequential | STL vector | 4000000 | 9 | 0.363 | 
-| Radix | Sequential | Dynamic Array | 4000000 | 5 | 4.37 | 
-| Radix | Sequential | Dynamic Array | 4000000 | 9 | 7.83 | 
-| Radix | Parallel TBB | STL vector | 4000000 | 5 | 1.619 | 
-| Radix | Parallel TBB | STL vector | 4000000 | 9 | 2.113 | 
-| parallel_sort | Parallel TBB | STL vector | 4000000 | 5 | 0.096 | 
-| parallel_sort | Parallel TBB | STL vector | 4000000 | 9 | 0.095 | 
+| std::sort | Sequential | STL vector | 4000000 | 5 | 0.286 | 
+| std::sort | Sequential | STL vector | 4000000 | 9 | 0.369 | 
+| parallel_sort | Parallel TBB | STL vector | 4000000 | 5 | 0.113 | 
+| parallel_sort | Parallel TBB | STL vector | 4000000 | 9 | 0.099 | 
+| Radix | Sequential | STL vector | 4000000 | 5 | 4.412 | 
+| Radix | Sequential | STL vector | 4000000 | 9 | 7.846 | 
+| Radix | Sequential | Dynamic Array | 4000000 | 5 | 4.39 | 
+| Radix | Sequential | Dynamic Array | 4000000 | 9 | 7.856 | 
+| Radix | Parallel TBB | STL vector | 4000000 | 5 | 0.768 | 
+| Radix | Parallel TBB | STL vector | 4000000 | 9 | 0.95 | 
+| Radix | Parallel TBB | Dynamic Array | 4000000 | 5 | 0.429 | 
+| Radix | Parallel TBB | Dynamic Array | 4000000 | 9 | 0.599 | 
+| Radix | std::thread | STL vector | 4000000 | 5 | 0.907 | 
+| Radix | std::thread | STL vector | 4000000 | 9 | 1.558 | 
+| Radix | Parallel TBB | Dynamic Array | 4000000 | 5 | 0.473 | 
+| Radix | Parallel TBB | Dynamic Array | 4000000 | 9 | 0.644 | 
