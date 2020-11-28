@@ -169,11 +169,11 @@ namespace sort{
 			}
 			power *= range;
 
-			out.clear();
+			int n = 0;
 
 			for (auto it = pocketArray.begin(); it < pocketArray.end(); ++it) {
 				for (auto item = it->begin(); item != it->end(); ++item) {
-					out.push_back(*item);
+					out[n++] = *item;
 				}
 				it->clear();
 			}
@@ -197,6 +197,27 @@ namespace sort{
 				for (auto item = it->begin(); item != it->end(); ++item) {
 					*(begin + i) = *item;
 					++i;
+				}
+				it->clear();
+			}
+		}
+	}
+
+	template <typename Container>
+	void radix_byte_sort_stl_containers(Container& container) {
+		Container& out = container;
+		std::vector<std::list<int>> pocketArray(256);
+		unsigned char digit;
+		for (int k = 0; k < sizeof(int); k++) {
+			for (auto it = out.begin(); it < out.end(); ++it) {
+				digit = *(((unsigned char*)&(*it)) + k);
+				pocketArray[digit].push_back(*it);
+			}
+
+			int n = 0;
+			for (auto it = pocketArray.begin(); it < pocketArray.end(); ++it) {
+				for (auto item = it->begin(); item != it->end(); ++item) {
+					out[n++] = *item;
 				}
 				it->clear();
 			}
@@ -252,6 +273,50 @@ namespace sort{
 	}
 
 	template <typename Type>
+	void radix_byte_sort_arrays(Type* array, size_t size) {
+		Type* out = array;
+		int* temp = new int[size];
+		
+		#define ByteOf(x) (((x) >> bitsOffset) & 0xff)
+		auto radix = [](short bitsOffset, int N, int* source, int* dest) {
+			int count[256];
+			int* cp, * sp, s, c, i;
+
+			cp = count;
+			for (i = 256; i > 0; --i, ++cp)
+				*cp = 0;
+
+			sp = source;
+			for (i = N; i > 0; --i, ++sp) {
+				cp = count + ByteOf(*sp);
+				++(*cp);
+			}
+
+			s = 0;
+			cp = count;
+			for (i = 256; i > 0; --i, ++cp) {
+				c = *cp;
+				*cp = s;
+				s += c;
+			}
+
+			sp = source;
+			for (i = N; i > 0; --i, ++sp) {
+				s = *sp;
+				cp = count + ByteOf(s);
+				dest[*cp] = s;
+				++(*cp);
+			}
+		};
+
+		radix(0, size, out, temp);
+		radix(8, size, temp, out);
+		radix(16, size, out, temp);
+		radix(24, size, temp, out);
+		delete[] temp;
+	}
+
+	template <typename Type>
 	void radix_sort_tbb_arrays(Type* array, size_t size, int width, int range) {
 		Pair<Type> pair = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, size), Pair<Type>(),
 			[&](const tbb::blocked_range<int>& r, Pair<Type> part_pair) -> Pair<Type> {
@@ -275,6 +340,37 @@ namespace sort{
 
 				return ret_pair;
 			}
+		);
+
+		for (int i = 0; i < pair.size; i++) {
+			array[i] = pair.array[i];
+		}
+	}
+
+	template <typename Type>
+	void radix_byte_sort_tbb_arrays(Type* array, size_t size) {
+		Pair<Type> pair = tbb::parallel_deterministic_reduce(tbb::blocked_range<int>(0, size), Pair<Type>(),
+			[&](const tbb::blocked_range<int>& r, Pair<Type> part_pair) -> Pair<Type> {
+			part_pair.array = new Type[r.size()];
+			part_pair.size = r.size();
+			int k = 0;
+
+			for (int i = r.begin(); i != r.end(); ++i)
+				part_pair.array[k++] = array[i];
+			radix_byte_sort_arrays<Type>(part_pair.array, part_pair.size);
+
+			return part_pair;
+		},
+			[](Pair<Type> pair1, Pair<Type> pair2) -> Pair<Type> {
+			Pair<Type> ret_pair;
+			ret_pair.size = pair1.size + pair2.size;
+			ret_pair.array = new Type[ret_pair.size];
+			std::merge(pair1.array, pair1.array + pair1.size, pair2.array, pair2.array + pair2.size, ret_pair.array);
+			delete[] pair1.array;
+			delete[] pair2.array;
+
+			return ret_pair;
+		}
 		);
 
 		for (int i = 0; i < pair.size; i++) {
@@ -367,6 +463,75 @@ namespace sort{
 				packs[i].size = (delta);
 
 				std::thread thread(radix_sort_arrays, packs[i].array, packs[i].size, width, range);
+				thread_pool.push_back(std::move(thread));
+			}
+		}
+		for (size_t i = 0; i < 8; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		Pair<Type>* packs2 = new Pair<Type>[4];
+		Pair<Type>* packs3 = new Pair<Type>[4];
+
+		for (int i = 0; i < 4; i++) {
+			packs2[i].size = packs[2 * i].size() + packs[2 * i + 1].size();
+			packs2[i].array = new Type[packs2[i].size];
+			std::thread thread(merge_func, packs[2 * i].array, packs[2 * i].array + packs[2 * i].size, packs[2 * i + 1].array, packs[2 * i + 1].array + packs[2 * i + 1].size, packs2[i].array);
+			thread_pool[i] = (std::move(thread));
+		}
+
+		for (size_t i = 0; i < 4; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		for (int i = 0; i < 2; i++) {
+			packs3[i].size = packs2[2 * i].size() + packs2[2 * i + 1].size();
+			packs3[i].array = new Type[packs3[i].size];
+
+			std::thread thread(merge_func, packs2[2 * i].array, packs2[2 * i].array + packs2[2 * i].size, packs2[2 * i + 1].array, packs2[2 * i + 1].array + packs2[2 * i + 1].size, packs3[i].array);
+			thread_pool[i] = (std::move(thread));
+		}
+
+		for (size_t i = 0; i < 2; i++) {
+			if (thread_pool[i].joinable())
+				thread_pool[i].join();
+		}
+
+		Pair<Type> pair;
+
+		std::merge(packs3[0].array, packs3[0].array + packs3[0].size, packs3[1].array, packs3[1].array + packs3[1].size, pair.array);
+
+		for (int i = 0; i < size; i++) {
+			array[i] = pair.array[i];
+		}
+	}
+
+	template <typename Type>
+	void radix_byte_sort_thread_arrays(Type* array, size_t size) {
+		using memfunc_type_2 = Type * (*)(Type*, Type*, Type*, Type*, Type*);
+		memfunc_type_2 merge_func = &std::merge;
+
+		int delta = size / 8;
+		int overhead = size % 8;
+
+		std::vector<std::thread> thread_pool;
+
+		Pair<Type>* packs = new Pair<Type>[8];
+
+		for (size_t i = 0; i < 8; i++) {
+			if (i < overhead) {
+				packs[i].array = array + i * (delta + 1);
+				packs[i].size = (delta + 1);
+
+				std::thread thread(radix_byte_sort_arrays, packs[i].array, packs[i].size);
+				thread_pool.push_back(std::move(thread));
+			} else {
+				packs[i].array = array + i * (delta)+overhead;
+				packs[i].size = (delta);
+
+				std::thread thread(radix_byte_sort_arrays, packs[i].array, packs[i].size);
 				thread_pool.push_back(std::move(thread));
 			}
 		}
