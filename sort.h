@@ -36,15 +36,6 @@ namespace generators{
 
 namespace algorithm {
 	std::vector<int> merge(std::vector<int> vector1, std::vector<int> vector2) {
-
-		/*for (size_t i = 0; i < vector1.size(); i++) {
-			std::cout << vector1[i] << std::endl;
-		}
-
-		for (size_t i = 0; i < vector2.size(); i++) {
-			std::cout << vector2[i] << std::endl;
-		}*/
-
 		int A = 0, B = 0;
 		std::vector<int> output(vector1.size() + vector2.size());
 		for (size_t i = 0; i < vector1.size() + vector2.size(); i++) {
@@ -246,30 +237,52 @@ namespace sort{
 	template <typename Type>
 	void radix_sort_arrays(Type* array, size_t size, int width, int range) {
 		Type* out = array;
+		Type* temp = new Type[size];
 
-		List<int>* pocketArray = new List<int>[range];
-		int digit;
+		auto radix = [](int power, int width, int range, int N, int* source, int* dest) {
+			int* count = new int[range];
+			int* cp, * sp, s, c, i;
+
+			cp = count;
+			for (i = range; i > 0; --i, ++cp) {
+				*cp = 0;
+			}
+
+			sp = source;
+			for (i = N; i > 0; --i, ++sp) {
+				cp = count + *sp % power / (power / range);			
+				++(*cp);
+				
+			}
+
+			s = 0;
+			cp = count;
+			for (i = range; i > 0; --i, ++cp) {
+				c = *cp;
+				*cp = s;
+				s += c;
+			}
+			sp = source;
+			for (i = N; i > 0; --i, ++sp) {
+				s = *sp;
+				cp = count + s % power / (power / range);
+				dest[*cp] = s;
+				++(*cp);
+			}
+		};
+
 		int power = range;
-		for (int k = 0; k < width; k++) {
-			for (size_t i = 0; i < size; ++i) {
-				digit = out[i] % power / (power / range);
-				pocketArray[digit].push_back(out[i]);
+		for (size_t i = 0; i < width; i++) {
+			if (i % 2 == 0) {
+				radix(power, width, range, size, out, temp);				
+			} else {
+				radix(power, width, range, size, temp, out);
 			}
 			power *= range;
-
-			int pos = 0;
-			for (size_t i = 0; i < range; ++i) {
-				auto item = pocketArray[i].first;
-				for (size_t j = 0; j < pocketArray[i].count; ++j) {
-					out[pos] = item->data;
-					++pos;
-					item = item->next;
-				}
-				pocketArray[i].clear();
-			}
 		}
-
-		delete[] pocketArray;
+		if (width % 2 == 1) {
+			std::memcpy(out, temp, size  * sizeof(Type));
+		}
 	}
 
 	template <typename Type>
