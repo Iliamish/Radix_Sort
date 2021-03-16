@@ -559,7 +559,6 @@ namespace sort{
 			if (thread_pool[i].joinable())
 				thread_pool[i].join();
 		}
-		//std::cout << "Thread sort time" << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 		Pair<Type>* packs2 = new Pair<Type>[4];
 		Pair<Type>* packs3 = new Pair<Type>[4];
 		begin_time = clock();
@@ -597,7 +596,6 @@ namespace sort{
 			array[i] = pair.array[i];
 		}
 		delete[] pair.array;
-		//std::cout << "Thread merge time" << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	}
 
 	template <typename Container>

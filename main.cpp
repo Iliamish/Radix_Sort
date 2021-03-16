@@ -19,7 +19,7 @@ TEST_CASE("HEADER", "[classic]") {
 
 #ifdef DEBUG
 
-//TEST_CASE("Sequential dynamic array( N = 4000000) 5", "[classic]") {
+//TEST_CASE("Sequential dynamic array( N = 10000000) 5", "[classic]") {
 //	const size_t N = 400000;
 //
 //	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
@@ -49,15 +49,16 @@ TEST_CASE("HEADER", "[classic]") {
 
 
 TEST_CASE("Parallel Byte std::thread array 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
+
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
 
+	clock_t begin_time = clock();
 	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
@@ -77,15 +78,15 @@ TEST_CASE("Parallel Byte std::thread array 5", "[classic]") {
 }
 
 TEST_CASE("Parallel Byte std::thread array 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
 
+	clock_t begin_time = clock();
 	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
@@ -106,7 +107,7 @@ TEST_CASE("Parallel Byte std::thread array 9", "[classic]") {
 
 #else
 TEST_CASE("Sequential STL container std::sort 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
 	clock_t begin_time = clock();
@@ -118,7 +119,7 @@ TEST_CASE("Sequential STL container std::sort 5", "[classic]") {
 }
 
 TEST_CASE("Sequential STL container std::sort 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 999999999);
 	clock_t begin_time = clock();
@@ -130,10 +131,10 @@ TEST_CASE("Sequential STL container std::sort 9", "[classic]") {
 }
 
 TEST_CASE("Parallel Sort TBB STL container 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
+	clock_t begin_time = clock();
 	tbb::parallel_sort(vec.begin(), vec.end(), [](int a, int b) {
 		return a < b;
 	});
@@ -144,10 +145,10 @@ TEST_CASE("Parallel Sort TBB STL container 5", "[classic]") {
 }
 
 TEST_CASE("Parallel Sort TBB STL container 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 999999999);
+	clock_t begin_time = clock();
 	tbb::parallel_sort(vec.begin(), vec.end(), [](int a, int b) {
 		return a < b;
 	});
@@ -158,7 +159,7 @@ TEST_CASE("Parallel Sort TBB STL container 9", "[classic]") {
 }
 
 TEST_CASE("Sequential STL container 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -179,7 +180,7 @@ TEST_CASE("Sequential STL container 5", "[classic]") {
 }
 
 TEST_CASE("Sequential STL container 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 999999999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -202,8 +203,8 @@ TEST_CASE("Sequential STL container 9", "[classic]") {
 }
 
 
-TEST_CASE("Sequential dynamic array( N = 4000000) 5", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Sequential dynamic array( N = 10000000) 5", "[classic]") {
+	const size_t N = 10000000;
 
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
@@ -230,8 +231,8 @@ TEST_CASE("Sequential dynamic array( N = 4000000) 5", "[classic]") {
 	REQUIRE(!error);
 }
 
-TEST_CASE("Sequential dynamic array( N = 4000000) 9", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Sequential dynamic array( N = 10000000) 9", "[classic]") {
+	const size_t N = 10000000;
 
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
@@ -259,7 +260,7 @@ TEST_CASE("Sequential dynamic array( N = 4000000) 9", "[classic]") {
 }
 
 TEST_CASE("Parallel Radix TBB STL container 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -281,7 +282,7 @@ TEST_CASE("Parallel Radix TBB STL container 5", "[classic]") {
 }
 
 TEST_CASE("Parallel Radix TBB STL container 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 999999999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -303,15 +304,16 @@ TEST_CASE("Parallel Radix TBB STL container 9", "[classic]") {
 }
 
 
-TEST_CASE("Parallel Radix TBB dynamic array( N = 4000000) 5", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Parallel Radix TBB dynamic array( N = 10000000) 5", "[classic]") {
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
+
+	clock_t begin_time = clock();
 
 	sort::radix_sort_tbb_arrays(arr, N, 5, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
@@ -331,15 +333,16 @@ TEST_CASE("Parallel Radix TBB dynamic array( N = 4000000) 5", "[classic]") {
 	REQUIRE(!error);
 }
 
-TEST_CASE("Parallel Radix TBB dynamic array( N = 4000000) 9", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Parallel Radix TBB dynamic array( N = 10000000) 9", "[classic]") {
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
+
+	clock_t begin_time = clock();
 
 	sort::radix_sort_tbb_arrays(arr, N, 9, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
@@ -360,7 +363,7 @@ TEST_CASE("Parallel Radix TBB dynamic array( N = 4000000) 9", "[classic]") {
 }
 
 TEST_CASE("Parallel std::thread STL container 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -381,7 +384,7 @@ TEST_CASE("Parallel std::thread STL container 5", "[classic]") {
 }
 
 TEST_CASE("Parallel std::thread STL container 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 999999999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -402,14 +405,15 @@ TEST_CASE("Parallel std::thread STL container 9", "[classic]") {
 }
 
 TEST_CASE("Parallel std::thread array 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
+
+	clock_t begin_time = clock();
 
 	sort::radix_sort_thread_arrays(arr, N, 5, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
@@ -430,14 +434,15 @@ TEST_CASE("Parallel std::thread array 5", "[classic]") {
 }
 
 TEST_CASE("Parallel std::thread array 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
+
+	clock_t begin_time = clock();
 
 	sort::radix_sort_thread_arrays(arr, N, 9, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
@@ -458,7 +463,7 @@ TEST_CASE("Parallel std::thread array 9", "[classic]") {
 }
 
 TEST_CASE("Sequential Byte STL container 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 99999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -481,7 +486,7 @@ TEST_CASE("Sequential Byte STL container 5", "[classic]") {
 }
 
 TEST_CASE("Sequential Byte STL container 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
 	std::vector<int> vec = generators::generateRandomNumbersContainer<std::vector<int>>(N, 0, 999999999);
 	std::vector<int> vec1 = vec, vec2 = vec;
@@ -503,8 +508,8 @@ TEST_CASE("Sequential Byte STL container 9", "[classic]") {
 	REQUIRE(!error);
 }
 
-TEST_CASE("Sequential Byte dynamic array( N = 4000000) 5", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Sequential Byte dynamic array( N = 10000000) 5", "[classic]") {
+	const size_t N = 10000000;
 
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
@@ -531,8 +536,8 @@ TEST_CASE("Sequential Byte dynamic array( N = 4000000) 5", "[classic]") {
 	REQUIRE(!error);
 }
 
-TEST_CASE("Sequential Byte dynamic array( N = 4000000) 9", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Sequential Byte dynamic array( N = 10000000) 9", "[classic]") {
+	const size_t N = 10000000;
 
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
@@ -559,8 +564,8 @@ TEST_CASE("Sequential Byte dynamic array( N = 4000000) 9", "[classic]") {
 	REQUIRE(!error);
 }
 
-TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 4000000) 5", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 10000000) 5", "[classic]") {
+	const size_t N = 10000000;
 
 	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
@@ -587,16 +592,16 @@ TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 4000000) 5", "[classic]") 
 	REQUIRE(!error);
 }
 
-TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 4000000) 9", "[classic]") {
-	const size_t N = 4000000;
+TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 10000000) 9", "[classic]") {
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
 
+	clock_t begin_time = clock();
 	sort::radix_byte_sort_tbb_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "Parallel TBB", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
@@ -616,14 +621,15 @@ TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 4000000) 9", "[classic]") 
 }
 
 TEST_CASE("Parallel Byte std::thread array 5", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
+
+	clock_t begin_time = clock();
 
 	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
@@ -644,15 +650,15 @@ TEST_CASE("Parallel Byte std::thread array 5", "[classic]") {
 }
 
 TEST_CASE("Parallel Byte std::thread array 9", "[classic]") {
-	const size_t N = 4000000;
+	const size_t N = 10000000;
 
-	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
 
+	clock_t begin_time = clock();
 	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
@@ -677,7 +683,7 @@ TEST_CASE("Parallel Byte std::thread array 9", "[classic]") {
 
 //Write another testing case for OpenMPI
 //TEST_CASE("Parallel STL container", "[classic]") {
-//	const size_t N = 4000000;
+//	const size_t N = 10000000;
 //	std::ofstream outfile("Readme.md");
 //
 //	clock_t begin_time = clock();
