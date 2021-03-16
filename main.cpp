@@ -597,7 +597,7 @@ TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 4000000) 9", "[classic]") 
 		vec[i] = arr[i];
 	}
 
-	sort::radix_byte_sort_thread_arrays(arr, N);
+	sort::radix_byte_sort_tbb_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "Parallel TBB", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
