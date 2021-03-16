@@ -457,6 +457,9 @@ namespace sort{
 		using memfunc_type_2 = Type* (*)(Type*, Type*, Type*, Type*, Type*);
 		memfunc_type_2 merge_func = &std::merge;
 
+		using sort_func = void (*)(Type*, size_t, int, int);
+		sort_func sortfunc = &radix_sort_arrays<int>;
+
 		int delta = size / 8;
 		int overhead = size % 8;
 
@@ -469,13 +472,13 @@ namespace sort{
 				packs[i].array = array + i * (delta + 1);
 				packs[i].size = (delta + 1);
 
-				std::thread thread(radix_sort_arrays, packs[i].array, packs[i].size, width, range);
+				std::thread thread(sortfunc, packs[i].array, packs[i].size, width, range);
 				thread_pool.push_back(std::move(thread));
 			} else {
 				packs[i].array = array + i * (delta) + overhead;
 				packs[i].size = (delta);
 
-				std::thread thread(radix_sort_arrays, packs[i].array, packs[i].size, width, range);
+				std::thread thread(sortfunc, packs[i].array, packs[i].size, width, range);
 				thread_pool.push_back(std::move(thread));
 			}
 		}
@@ -488,7 +491,7 @@ namespace sort{
 		Pair<Type>* packs3 = new Pair<Type>[4];
 
 		for (int i = 0; i < 4; i++) {
-			packs2[i].size = packs[2 * i].size() + packs[2 * i + 1].size();
+			packs2[i].size = packs[2 * i].size + packs[2 * i + 1].size;
 			packs2[i].array = new Type[packs2[i].size];
 			std::thread thread(merge_func, packs[2 * i].array, packs[2 * i].array + packs[2 * i].size, packs[2 * i + 1].array, packs[2 * i + 1].array + packs[2 * i + 1].size, packs2[i].array);
 			thread_pool[i] = (std::move(thread));
@@ -500,7 +503,7 @@ namespace sort{
 		}
 
 		for (int i = 0; i < 2; i++) {
-			packs3[i].size = packs2[2 * i].size() + packs2[2 * i + 1].size();
+			packs3[i].size = packs2[2 * i].size + packs2[2 * i + 1].size;
 			packs3[i].array = new Type[packs3[i].size];
 
 			std::thread thread(merge_func, packs2[2 * i].array, packs2[2 * i].array + packs2[2 * i].size, packs2[2 * i + 1].array, packs2[2 * i + 1].array + packs2[2 * i + 1].size, packs3[i].array);
@@ -513,6 +516,7 @@ namespace sort{
 		}
 
 		Pair<Type> pair;
+		pair.array = new Type[size];
 
 		std::merge(packs3[0].array, packs3[0].array + packs3[0].size, packs3[1].array, packs3[1].array + packs3[1].size, pair.array);
 
@@ -526,25 +530,28 @@ namespace sort{
 		using memfunc_type_2 = Type * (*)(Type*, Type*, Type*, Type*, Type*);
 		memfunc_type_2 merge_func = &std::merge;
 
+		using sort_func = void (*)(Type*, size_t);
+		sort_func sortfunc = &radix_byte_sort_arrays<int>;
+
 		int delta = size / 8;
 		int overhead = size % 8;
 
 		std::vector<std::thread> thread_pool;
 
 		Pair<Type>* packs = new Pair<Type>[8];
-
+		clock_t begin_time = clock();
 		for (size_t i = 0; i < 8; i++) {
 			if (i < overhead) {
 				packs[i].array = array + i * (delta + 1);
 				packs[i].size = (delta + 1);
 
-				std::thread thread(radix_byte_sort_arrays, packs[i].array, packs[i].size);
+				std::thread thread(sortfunc, packs[i].array, packs[i].size);
 				thread_pool.push_back(std::move(thread));
 			} else {
 				packs[i].array = array + i * (delta)+overhead;
 				packs[i].size = (delta);
 
-				std::thread thread(radix_byte_sort_arrays, packs[i].array, packs[i].size);
+				std::thread thread(sortfunc, packs[i].array, packs[i].size);
 				thread_pool.push_back(std::move(thread));
 			}
 		}
@@ -552,12 +559,12 @@ namespace sort{
 			if (thread_pool[i].joinable())
 				thread_pool[i].join();
 		}
-
+		//std::cout << "Thread sort time" << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 		Pair<Type>* packs2 = new Pair<Type>[4];
 		Pair<Type>* packs3 = new Pair<Type>[4];
-
+		begin_time = clock();
 		for (int i = 0; i < 4; i++) {
-			packs2[i].size = packs[2 * i].size() + packs[2 * i + 1].size();
+			packs2[i].size = packs[2 * i].size + packs[2 * i + 1].size;
 			packs2[i].array = new Type[packs2[i].size];
 			std::thread thread(merge_func, packs[2 * i].array, packs[2 * i].array + packs[2 * i].size, packs[2 * i + 1].array, packs[2 * i + 1].array + packs[2 * i + 1].size, packs2[i].array);
 			thread_pool[i] = (std::move(thread));
@@ -569,7 +576,7 @@ namespace sort{
 		}
 
 		for (int i = 0; i < 2; i++) {
-			packs3[i].size = packs2[2 * i].size() + packs2[2 * i + 1].size();
+			packs3[i].size = packs2[2 * i].size + packs2[2 * i + 1].size;
 			packs3[i].array = new Type[packs3[i].size];
 
 			std::thread thread(merge_func, packs2[2 * i].array, packs2[2 * i].array + packs2[2 * i].size, packs2[2 * i + 1].array, packs2[2 * i + 1].array + packs2[2 * i + 1].size, packs3[i].array);
@@ -582,12 +589,15 @@ namespace sort{
 		}
 
 		Pair<Type> pair;
+		pair.array = new Type[size];
 
 		std::merge(packs3[0].array, packs3[0].array + packs3[0].size, packs3[1].array, packs3[1].array + packs3[1].size, pair.array);
 
 		for (int i = 0; i < size; i++) {
 			array[i] = pair.array[i];
 		}
+		delete[] pair.array;
+		//std::cout << "Thread merge time" << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	}
 
 	template <typename Container>

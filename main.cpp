@@ -19,19 +19,76 @@ TEST_CASE("HEADER", "[classic]") {
 
 #ifdef DEBUG
 
-TEST_CASE("Sequential dynamic array( N = 4000000) 5", "[classic]") {
-	const size_t N = 400000;
+//TEST_CASE("Sequential dynamic array( N = 4000000) 5", "[classic]") {
+//	const size_t N = 400000;
+//
+//	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
+//	std::vector<int> vec(N);
+//	for (int i = 0; i < vec.size(); i++) {
+//		vec[i] = arr[i];
+//	}
+//
+//	clock_t begin_time = clock();
+//	sort::radix_sort_arrays<int>(arr, N, 5, 10);
+//	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+//	writeResult("Radix", "Sequential", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
+//
+//	std::sort(vec.begin(), vec.end());
+//	bool error = false;
+//	for (int i = 0; i < vec.size(); i++) {
+//		if (arr[i] != vec[i]) {
+//			std::cout << arr[i] << " ----- " << vec[i] << std::endl;
+//			error = true;
+//			break;
+//		}
+//	}
+//	delete[] arr;
+//
+//	REQUIRE(!error);
+//}
 
+
+TEST_CASE("Parallel Byte std::thread array 5", "[classic]") {
+	const size_t N = 4000000;
+
+	clock_t begin_time = clock();
 	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 99999);
 	std::vector<int> vec(N);
 	for (int i = 0; i < vec.size(); i++) {
 		vec[i] = arr[i];
 	}
 
-	clock_t begin_time = clock();
-	sort::radix_sort_arrays<int>(arr, N, 5, 10);
+	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
-	writeResult("Radix", "Sequential", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
+	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
+
+	std::sort(vec.begin(), vec.end());
+	bool error = false;
+	for (int i = 0; i < vec.size(); i++) {
+		if (arr[i] != vec[i]) {
+			std::cout << arr[i] << " ----- " << vec[i] << std::endl;
+			error = true;
+			break;
+		}
+	}
+	delete[] arr;
+
+	REQUIRE(!error);
+}
+
+TEST_CASE("Parallel Byte std::thread array 9", "[classic]") {
+	const size_t N = 4000000;
+
+	clock_t begin_time = clock();
+	int* arr = generators::generateRandomNumbersArray<int>(N, 0, 999999999);
+	std::vector<int> vec(N);
+	for (int i = 0; i < vec.size(); i++) {
+		vec[i] = arr[i];
+	}
+
+	sort::radix_byte_sort_thread_arrays(arr, N);
+	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
+	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
 	std::sort(vec.begin(), vec.end());
 	bool error = false;
@@ -354,7 +411,7 @@ TEST_CASE("Parallel std::thread array 5", "[classic]") {
 		vec[i] = arr[i];
 	}
 
-	sort::radix_sort_tbb_arrays(arr, N, 5, 10);
+	sort::radix_sort_thread_arrays(arr, N, 5, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix", "std::thread", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
@@ -382,7 +439,7 @@ TEST_CASE("Parallel std::thread array 9", "[classic]") {
 		vec[i] = arr[i];
 	}
 
-	sort::radix_sort_tbb_arrays(arr, N, 9, 10);
+	sort::radix_sort_thread_arrays(arr, N, 9, 10);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix", "std::thread", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
@@ -540,9 +597,9 @@ TEST_CASE("Parallel Radix Byte TBB dynamic array( N = 4000000) 9", "[classic]") 
 		vec[i] = arr[i];
 	}
 
-	sort::radix_byte_sort_tbb_arrays(arr, N);
+	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
-	writeResult("RadixByte", "Parallel TBB", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
+	writeResult("Radix Byte", "Parallel TBB", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
 	std::sort(vec.begin(), vec.end());
 	bool error = false;
@@ -568,7 +625,7 @@ TEST_CASE("Parallel Byte std::thread array 5", "[classic]") {
 		vec[i] = arr[i];
 	}
 
-	sort::radix_byte_sort_tbb_arrays(arr, N);
+	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 5, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
@@ -596,7 +653,7 @@ TEST_CASE("Parallel Byte std::thread array 9", "[classic]") {
 		vec[i] = arr[i];
 	}
 
-	sort::radix_byte_sort_tbb_arrays(arr, N);
+	sort::radix_byte_sort_thread_arrays(arr, N);
 	std::cout << float(clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 	writeResult("Radix Byte", "std::thread", "Dynamic Array", N, 9, float(clock() - begin_time) / CLOCKS_PER_SEC);
 
